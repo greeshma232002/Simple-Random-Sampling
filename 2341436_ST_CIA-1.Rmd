@@ -1,0 +1,87 @@
+---
+title: "2341436_ST_CIA-1"
+author: "Greeshma S"
+date: "2025-11-24"
+output: word_document
+---
+
+```{r}
+# 7.0 R Simulation: Comparing SRSWR and SRSWOR
+
+# 7.1 Generating the Hypothetical Population
+set.seed(123)
+N <- 10000
+
+# Generate hypothetical GPA data (skewed towards higher values, mean ~3.1, sd ~0.5)
+population_data <- data.frame(
+  StudentID = 1:N,
+  GPA = rbeta(N, shape1 = 8, shape2 = 2) * 4 # Scale Beta(8,2) to 0-4 range
+)
+
+# Check population parameters
+pop_mean <- mean(population_data$GPA)
+pop_sd <- sd(population_data$GPA)
+cat("Population Mean GPA:", round(pop_mean, 3), "\n")
+cat("Population Std Dev GPA:", round(pop_sd, 3), "\n")
+
+# 7.2 Applying SRSWOR and SRSWR
+n <- 100
+num_sim <- 1000
+
+# Vectors to store results
+sample_means_wor <- numeric(num_sim)
+sample_means_wr <- numeric(num_sim)
+
+# Simulation loop
+for (i in 1:num_sim) {
+  # SRS without replacement
+  sample_wor <- sample(population_data$GPA, size = n, replace = FALSE)
+  sample_means_wor[i] <- mean(sample_wor)
+  
+  # SRS with replacement
+  sample_wr <- sample(population_data$GPA, size = n, replace = TRUE)
+  sample_means_wr[i] <- mean(sample_wr)
+}
+
+# 7.3 Comparing the Results
+# Create a data frame for plotting
+results_df <- data.frame(
+  Method = rep(c("SRSWOR", "SRSWR"), each = num_sim),
+  SampleMean = c(sample_means_wor, sample_means_wr)
+)
+
+# Load ggplot2 for visualization
+library(ggplot2)
+
+# Plot the distributions
+ggplot(results_df, aes(x = SampleMean, fill = Method)) +
+  geom_density(alpha = 0.5) +
+  geom_vline(xintercept = pop_mean, linetype = "dashed", color = "red") +
+  labs(title = "Comparison of Sampling Distributions: SRSWOR vs SRSWR",
+       subtitle = paste("Population Mean (Red Line) =", round(pop_mean, 3)),
+       x = "Sample Mean GPA",
+       y = "Density") +
+  theme_minimal()
+
+# Calculate and print the mean and variance of the sample means
+cat("--- Simulation Results (Based on 1000 samples of n=100) ---\n")
+cat("SRSWOR - Mean of Sample Means:", round(mean(sample_means_wor), 3), "\n")
+cat("SRSWOR - Variance of Sample Means:", round(var(sample_means_wor), 5), "\n")
+cat("SRSWR  - Mean of Sample Means:", round(mean(sample_means_wr), 3), "\n")
+cat("SRSWR  - Variance of Sample Means:", round(var(sample_means_wr), 5), "\n")
+
+# Theoretical variance for comparison
+theoretical_var_wor <- (pop_sd^2 / n) * ((N - n) / (N - 1))
+theoretical_var_wr <- (pop_sd^2 / n)
+
+cat("\n--- Theoretical Variance ---\n")
+cat("Theoretical SRSWOR Variance (with FPC):", round(theoretical_var_wor, 5), "\n")
+cat("Theoretical SRSWR Variance:", round(theoretical_var_wr, 5), "\n")
+
+# Additional comparison: Standard Error
+cat("\n--- Standard Error Comparison ---\n")
+cat("SRSWOR - SE from simulation:", round(sd(sample_means_wor), 5), "\n")
+cat("SRSWOR - Theoretical SE:", round(sqrt(theoretical_var_wor), 5), "\n")
+cat("SRSWR  - SE from simulation:", round(sd(sample_means_wr), 5), "\n")
+cat("SRSWR  - Theoretical SE:", round(sqrt(theoretical_var_wr), 5), "\n")
+```
